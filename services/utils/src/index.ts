@@ -2,12 +2,10 @@ import express from 'express';
 import dotenv from 'dotenv';
 import routes from './routes/index.js';
 import {v2 as cloudinary} from 'cloudinary';
-import { startMailConsumer } from './consumer.js';
 
 
 dotenv.config();
 
-startMailConsumer();
 
 cloudinary.config({
     cloud_name : process.env.CLOUDINARY_CLOUD_NAME,

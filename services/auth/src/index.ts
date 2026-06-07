@@ -4,7 +4,6 @@ dotenv.config();
 import {sql} from './utils/db.js';
 import authRoutes from './routes/auth.js';
 import { ErrorHandler } from "./utils/errorHandler.js";
-import { connectKafka } from "./producer.js";
 import { createClient } from 'redis';
 
 const PORT = process.env.PORT || 8000;
@@ -22,7 +21,6 @@ redisClient.connect().then(() => {
     console.log("Failed to connect to Redis", error);
 });
 
-connectKafka();
 
 app.use('/api/auth', authRoutes);
 

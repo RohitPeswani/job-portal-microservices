@@ -7,7 +7,6 @@ import { getBuffer } from "../utils/buffer.js";
 import axios from "axios";
 import jwt from 'jsonwebtoken';
 import { forgotPasswordTemplate } from "../forgotPasswordTemplate.js";
-import { publishToTopic } from "../producer.js";
 import { redisClient } from "../index.js";
 
 export const registerUser = tryCatch(async(req  , res , next) => {
@@ -127,7 +126,7 @@ export const forgotPassword = tryCatch(async(req, res, next) => {
         html : forgotPasswordTemplate(resetLink)
     }
 
-    await publishToTopic("send-mail", message);
+    await axios.post(`${process.env.UTILS_SERVICE_URL}/api/utils/send-email`, message);
 
     return res.status(200).json({
         message : "If user exists, a mail has been sent"
