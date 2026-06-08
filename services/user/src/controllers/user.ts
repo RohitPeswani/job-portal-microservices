@@ -140,13 +140,95 @@ export const addSkillToUser = tryCatch(async(req : AuthenticatedRequest, res, ne
         });
     }
 
-    const {skill} = req.body;
+    const {skillName} = req.body;
 
-    if(!skill || skill.trim() === ""){
+
+    if(!skillName || skillName.trim() === ""){
         return res.status(400).json({
             success : false,
             message : "Skill is required"
         });
     }  
+    let wasSkillAdded = false;
 
+    try {
+        await sql`BEGIN`
+
+        const users = await sql`select user_id from users where user_id = ${userId}`;
+
+        if(users.length === 0){
+            throw new ErrorHandler(404, "User not found");
+        }
+
+        const normalizedSkill = skillName.trim().toLowerCase().replace(/\s+/g, " ");
+
+        const [skill] = await sql`insert into skills (name) values (${normalizedSkill}) on conflict (name) do update set name = excluded.name returning skill_id`;
+
+        const skillId = skill.skill_id;
+
+        const insertionResult = await sql`insert into user_skills (user_id, skill_id) values (${userId}, ${skillId}) on conflict (user_id, skill_id) do nothing returning user_id`;
+
+        if(insertionResult.length > 0){
+           wasSkillAdded = true;
+        }
+
+        await sql`COMMIT`;
+
+    if(!wasSkillAdded){
+        return res.status(200).json({
+            success : false,
+            message : "Skill already exists"
+        });
+    }
+
+     res.status(200).json({
+            success : true,
+            message : `${normalizedSkill} Skill added successfully`
+        });
+    } catch (error) {
+        await sql`ROLLBACK`;
+        throw error;
+    }
+
+})
+
+export const deleteSkillFromUser = tryCatch(async(req : AuthenticatedRequest, res, next) => {
+    const userId = req.user?.user_id;
+
+    if(!userId){
+        return res.status(401).json({
+            success : false,
+            message : "Unauthorized"
+        });
+    }
+
+    const {skillName} = req.body;
+
+    if(!skillName || skillName.trim() === ""){
+        return res.status(400).json({
+            success : false,
+            message : "Skill is required"
+        });
+    }
+
+    const normalizedSkill = skillName.trim().toLowerCase();
+
+    const [skill] = await sql`SELECT skill_id FROM skills WHERE name = ${normalizedSkill}`;
+
+    if(skill.length === 0){
+        return next(new ErrorHandler(404, "Skill not found"));
+    }
+
+    const skillId = skill.skill_id;
+
+    const deletionResult = await sql`DELETE FROM user_skills WHERE user_id = ${userId} AND skill_id = ${skillId} RETURNING user_id`;
+
+    if(deletionResult.length === 0){
+        return next(new ErrorHandler(404, "Skill not found"));
+    }
+
+    return res.status(200).json({
+        success : true,
+        message : `${normalizedSkill} Skill deleted successfully`
+    });
 })
