@@ -232,3 +232,81 @@ export const deleteSkillFromUser = tryCatch(async(req : AuthenticatedRequest, re
         message : `${normalizedSkill} Skill deleted successfully`
     });
 })
+
+export const applyForJob = tryCatch(async(req : AuthenticatedRequest, res, next) => {
+    const user = req.user;
+
+    if(!user){
+       return next(new ErrorHandler(401, "Unauthorized"));
+    }
+
+    if(user.role !== "jobseeker"){
+        return next(new ErrorHandler(403, "You are not allowed to apply"));
+    }
+
+    const applicant_id = user.user_id;
+    const resume = user.resume;
+
+    if(!resume){
+        return next(new ErrorHandler(400, "Please upload your resume first"));
+    }
+
+    
+    const {jobId} = req.params;
+
+    if(!jobId){
+        return next(new ErrorHandler(400, "Job is required"));
+    }
+
+    const [job] = await sql`SELECT is_active FROM jobs WHERE job_id = ${jobId}`;
+
+    if(job.length === 0){
+        return next(new ErrorHandler(404, "Job not found"));
+    }
+
+    if(!job.is_active){
+        return next(new ErrorHandler(400, "Job is not active"));
+    }
+
+    // const now = Date.now();
+
+    // const subTime = user.subscription ? new Date(user.subscription).getTime() : 0;
+
+    // const daysDiff = Math.ceil((subTime - now) / (1000 * 60 * 60 * 24));
+
+    // const isSubscribed = daysDiff <= 0 ? false : true;
+
+    // if(!isSubscribed){
+    //     return next(new ErrorHandler(400, "Your subscription has expired"));
+    // }
+
+    const existingApplication = await sql`SELECT application_id FROM applications WHERE job_id = ${jobId} AND applicant_id = ${applicant_id}`;
+
+    if(existingApplication.length > 0){
+        return next(new ErrorHandler(400, "You have already applied for this job"));
+    }
+    const [application] = await sql`INSERT INTO applications (job_id, applicant_id, applicant_email, resume, subscribed) VALUES (${jobId}, ${applicant_id}, ${user.email}, ${resume}, ${false}) RETURNING *`;
+
+    return res.status(200).json({
+        success : true,
+        application
+    });
+})
+
+export const getAllApplications = tryCatch(async(req : AuthenticatedRequest, res, next) => {
+    const user = req.user;
+
+    if(!user){
+       return next(new ErrorHandler(401, "Unauthorized"));
+    }
+
+
+    const applicant_id = user.user_id;
+
+    const applications = await sql`SELECT a.* , j.title AS job_title, j.salary AS job_salary, j.location as job_location, c.name as company_name FROM applications a JOIN jobs j ON a.job_id = j.job_id JOIN companies c ON j.company_id = c.company_id WHERE applicant_id = ${applicant_id}`;
+
+    return res.status(200).json({
+        success : true,
+        applications
+    });
+})

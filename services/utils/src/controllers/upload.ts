@@ -6,14 +6,22 @@ export const uploadFileController = async (req: Request, res: Response)=> {
 
         if(public_id){
             await cloudinary.v2.uploader.destroy(public_id);
+
+            return res.status(200).json({
+                success : true,
+                message : "File deleted successfully"
+            })
         }
-        const cloud = await cloudinary.v2.uploader.upload(buffer);
+        if(buffer){
+            const cloud = await cloudinary.v2.uploader.upload(buffer);
+        
 
         return res.status(200).json({
             success: true,
             url: cloud.secure_url,
             public_id: cloud.public_id
         })
+    }
     } catch (error : any) {
         res.status(500).json({
             success: false,
