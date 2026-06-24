@@ -3,6 +3,9 @@ import dotenv from 'dotenv';
 import routes from './routes/index.js';
 import {v2 as cloudinary} from 'cloudinary';
 import { ErrorHandler } from './utils/errorHandler.js';
+import cors from 'cors';
+
+
 
 
 
@@ -17,6 +20,10 @@ cloudinary.config({
 
 const app = express();
 
+app.use(cors({
+    origin : "http://localhost:3000",
+    credentials : true
+}));
 app.use(express.json({limit : "50mb"}));
 app.use(express.urlencoded({extended: true, limit : "50mb"}));
 

@@ -5,10 +5,15 @@ import {sql} from './utils/db.js';
 import authRoutes from './routes/auth.js';
 import { ErrorHandler } from "./utils/errorHandler.js";
 import { createClient } from 'redis';
+import cors from 'cors';
 
 const PORT = process.env.PORT || 8000;
 const app = express();
 
+app.use(cors({
+    origin: process.env.FRONTEND_URL,
+    credentials: true
+}));
 app.use(express.json());
 
 export const redisClient = createClient({

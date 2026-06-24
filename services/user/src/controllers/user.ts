@@ -34,7 +34,7 @@ export const getUserProfile = tryCatch(async(req : AuthenticatedRequest, res, ne
 })
 
 export const updateUserProfile = tryCatch(async(req : AuthenticatedRequest, res, next) => {
-    const user = req.user;
+    let user = req.user;
     
     if(!user){
         return next(new ErrorHandler(401, "Authentication required"));
@@ -46,16 +46,17 @@ export const updateUserProfile = tryCatch(async(req : AuthenticatedRequest, res,
     const newPhone = phone_number || user.phone_number;
     const newBio = bio || user.bio;
 
-    const [updatedUser] = await sql`UPDATE users SET name = ${newName}, phone_number = ${newPhone}, bio = ${newBio} WHERE user_id = ${user.user_id} RETURNING user_id, name,email, phone_number, bio`;
-
+    const [updatedUser] = await sql`UPDATE users SET name = ${newName}, phone_number = ${newPhone}, bio = ${newBio} WHERE user_id = ${user.user_id} RETURNING *`;
+    
+    user = {...user, ...updatedUser};
     return res.status(200).json({
         success : true,
-        updatedUser
+        user
     });
 })
 
 export const updateProfilePic = tryCatch(async(req : AuthenticatedRequest, res, next) => {
-    const user = req.user;
+    let user = req.user;
     
     if(!user){
         return next(new ErrorHandler(401, "Authentication required"));
@@ -84,16 +85,17 @@ export const updateProfilePic = tryCatch(async(req : AuthenticatedRequest, res, 
         public_id : oldPublicId
     });
 
-    const [updatedUser] = await sql`UPDATE users SET profile_pic = ${data.url}, profile_pic_public_id = ${data.public_id} WHERE user_id = ${user.user_id} RETURNING user_id, name, profile_pic`;
-
+    const [updatedUser] = await sql`UPDATE users SET profile_pic = ${data.url}, profile_pic_public_id = ${data.public_id} WHERE user_id = ${user.user_id} RETURNING *`;
+    
+    user = {...user, ...updatedUser};
     return res.status(200).json({
         success : true,
-        updatedUser
+        user
     });
 })
 
 export const updateResume = tryCatch(async(req : AuthenticatedRequest, res, next) => {
-    const user = req.user;
+    let user = req.user;
     
     if(!user){
         return next(new ErrorHandler(401, "Authentication required"));
@@ -122,16 +124,18 @@ export const updateResume = tryCatch(async(req : AuthenticatedRequest, res, next
         public_id : oldPublicId
     });
 
-    const [updatedUser] = await sql`UPDATE users SET resume = ${data.url}, resume_public_id = ${data.public_id} WHERE user_id = ${user.user_id} RETURNING user_id, name, resume`;
+    const [updatedUser] = await sql`UPDATE users SET resume = ${data.url}, resume_public_id = ${data.public_id} WHERE user_id = ${user.user_id} RETURNING *`;
 
+    user = {...user, ...updatedUser};
     return res.status(200).json({
         success : true,
-        updatedUser
+        user
     });
 })
 
 export const addSkillToUser = tryCatch(async(req : AuthenticatedRequest, res, next) => {
     const userId = req.user?.user_id;
+    let user = req.user;
 
     if(!userId){
         return res.status(401).json({
@@ -181,9 +185,12 @@ export const addSkillToUser = tryCatch(async(req : AuthenticatedRequest, res, ne
         });
     }
 
+    const [updatedUser] = await sql`SELECT u.user_id, u.name, u.email, u.phone_number, u.role, u.bio, u.resume, u.resume_public_id, u.profile_pic, u.profile_pic_public_id, u.subscription, ARRAY_AGG(s.name) FILTER (WHERE s.name IS NOT NULL) as skills, u.subscription, u.created_at FROM users u LEFT JOIN user_skills us ON u.user_id = us.user_id LEFT JOIN skills s ON us.skill_id = s.skill_id WHERE u.user_id = ${userId} GROUP BY u.user_id`;
+
+   
      res.status(200).json({
             success : true,
-            message : `${normalizedSkill} Skill added successfully`
+            user : updatedUser
         });
     } catch (error) {
         await sql`ROLLBACK`;
@@ -227,9 +234,11 @@ export const deleteSkillFromUser = tryCatch(async(req : AuthenticatedRequest, re
         return next(new ErrorHandler(404, "Skill not found"));
     }
 
+    const [updatedUser] = await sql`SELECT u.user_id, u.name, u.email, u.phone_number, u.role, u.bio, u.resume, u.resume_public_id, u.profile_pic, u.profile_pic_public_id, u.subscription, ARRAY_AGG(s.name) FILTER (WHERE s.name IS NOT NULL) as skills, u.subscription, u.created_at FROM users u LEFT JOIN user_skills us ON u.user_id = us.user_id LEFT JOIN skills s ON us.skill_id = s.skill_id WHERE u.user_id = ${userId} GROUP BY u.user_id`;
+
     return res.status(200).json({
         success : true,
-        message : `${normalizedSkill} Skill deleted successfully`
+        user : updatedUser
     });
 })
 

@@ -1,0 +1,72 @@
+"use client";
+
+import React from "react";
+import { User } from "@/types";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { Camera01Icon, PencilEdit01Icon, Briefcase02Icon } from "@hugeicons/core-free-icons";
+import { Loader } from "../loader";
+import { useSelector } from "react-redux";
+import { RootState } from "@/store/store";
+
+interface ProfileHeaderProps {
+  onEditAvatar: () => void;
+  onEditName: () => void;
+  loading: boolean;
+} 
+
+const ProfileHeader: React.FC<ProfileHeaderProps> = ({ onEditAvatar, onEditName, loading }) => {
+  const {user} = useSelector((state : RootState) => state.auth);
+  const userInitials = user?.name
+    ? user.name
+        .split(" ")
+        .map((n: string) => n[0])
+        .join("")
+        .toUpperCase()
+    : "??";
+
+  return (
+    <div className="relative mb-8">
+      {/* Banner */}
+      <div className="h-48 w-full bg-blue-600 rounded-t-xl" />
+
+      {/* Profile Info Overlay */}
+      <div className="px-6 -mt-12 flex flex-col md:flex-row md:items-end gap-4 relative">
+        <div className="relative group">
+          <Avatar className="h-32 w-32 border-4 border-white shadow-lg bg-white overflow-hidden">
+            {loading ? <Loader size={32} /> : <><AvatarImage src={user?.profile_pic} alt={user?.name} className="object-cover" />
+            <AvatarFallback className="bg-gray-100 text-3xl font-bold text-blue-600 uppercase">
+              {userInitials}
+            </AvatarFallback></>}
+          </Avatar>
+          <button
+            onClick={onEditAvatar}
+            className="absolute bottom-1 right-1 p-2 bg-white rounded-full shadow-md hover:bg-gray-50 border border-gray-100 transition-all"
+            aria-label="Change profile picture"
+          >
+            <HugeiconsIcon icon={Camera01Icon} size={18} className="text-gray-600" />
+          </button>
+        </div>
+
+        <div className="flex-1 pb-2">
+          <div className="flex items-center gap-2">
+            <h1 className="text-3xl font-bold text-gray-900">{user?.name || "Anonymous User"}</h1>
+            <button
+              onClick={onEditName}
+              className="p-1 hover:bg-gray-100 rounded transition-colors"
+              aria-label="Edit name"
+            >
+              <HugeiconsIcon icon={PencilEdit01Icon} size={20} className="text-gray-400" />
+            </button>
+          </div>
+          <div className="flex items-center gap-2 mt-1 text-gray-500">
+            <HugeiconsIcon icon={Briefcase02Icon} size={16} />
+            <span className="text-sm font-medium capitalize">{user?.role || "Jobseeker"}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default ProfileHeader;

@@ -49,6 +49,7 @@ export const registerUser = tryCatch(async(req  , res , next) => {
     }
 
      return res.status(200).json({
+        success : true,
         message : "user registered successfully",
         registerUser,
 
@@ -83,6 +84,7 @@ export const loginUser = tryCatch(async(req, res, next) => {
     const token = jwt.sign({id : existingUser[0].user_id}, process.env.JWT_SECRET as string, {expiresIn : "1d"});
 
     return res.status(200).json({
+        success : true,
         message : "user logged in successfully",
         existingUser,
         token

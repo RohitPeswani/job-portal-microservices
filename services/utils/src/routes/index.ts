@@ -6,7 +6,7 @@ const routes = express.Router();
 
 routes.post('/upload', uploadFileController);
 routes.post('/send-email', sendEmail);
-routes.post('/carrer-guidance', carrerGuidance);
+routes.post('/career-guidance', carrerGuidance);
 routes.post('/analyze-resume', uploadFile, analyzeResume);
 
 export default routes;

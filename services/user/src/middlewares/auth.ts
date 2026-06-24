@@ -61,7 +61,6 @@ export const isAuthenticated = async(req : AuthenticatedRequest, res : Response,
    req.user = user;
 
 
-
    next();
 
     } catch (error) {
