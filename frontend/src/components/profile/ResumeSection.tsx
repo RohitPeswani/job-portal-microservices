@@ -11,11 +11,17 @@ import { Loader } from "../loader";
 
 interface ResumeSectionProps {
   user: User | null;
-  onUpload: (file: File) => Promise<void>;
-  loading: boolean;
+  onUpload?: (file: File) => Promise<void>;
+  loading?: boolean;
+  isReadOnly?: boolean;
 }
 
-const ResumeSection: React.FC<ResumeSectionProps> = ({ user, onUpload, loading }) => {
+const ResumeSection: React.FC<ResumeSectionProps> = ({ 
+  user, 
+  onUpload, 
+  loading = false,
+  isReadOnly = false 
+}) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -34,8 +40,10 @@ const ResumeSection: React.FC<ResumeSectionProps> = ({ user, onUpload, loading }
     }
 
     try {
-      await onUpload(file);
-      toast.success("Resume updated successfully");
+      if (onUpload) {
+        await onUpload(file);
+        toast.success("Resume updated successfully");
+      }
     } catch (err) {
       toast.error("Failed to upload resume");
     }
@@ -82,14 +90,16 @@ const ResumeSection: React.FC<ResumeSectionProps> = ({ user, onUpload, loading }
               onChange={handleFileChange}
               accept=".pdf"
             />
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => fileInputRef.current?.click()}
-              className="w-full sm:w-auto px-6 font-medium hover:bg-gray-50 border-gray-200"
-            >
-              Update
-            </Button>
+            {!isReadOnly && (
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => fileInputRef.current?.click()}
+                className="w-full sm:w-auto px-6 font-medium hover:bg-gray-50 border-gray-200"
+              >
+                Update
+              </Button>
+            )}
           </div> </>}
         </CardContent>
       </Card>

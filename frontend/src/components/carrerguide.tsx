@@ -126,8 +126,7 @@ export default function CarrerGuide() {
           </div>
 
           <Dialog open={isOpen} onOpenChange={setIsOpen}>
-            <DialogTrigger>
-              <Button 
+            <DialogTrigger render={<Button 
                 size="lg" 
                 className="group h-14 rounded-xl bg-[#0f172a] px-8 py-4 transition-all hover:bg-[#1e293b]"
               >
@@ -136,7 +135,8 @@ export default function CarrerGuide() {
                   <span className="font-semibold text-white">Get Carrer Guidance</span>
                   <HugeiconsIcon icon={ArrowRight01Icon} size={18} className="text-gray-400 group-hover:translate-x-1 transition-transform" />
                 </div>
-              </Button>
+              </Button> }>
+             
             </DialogTrigger>
 
             <DialogContent className="sm:max-w-[700px] max-h-[90vh] p-0 overflow-hidden rounded-2xl border-none shadow-2xl flex flex-col">

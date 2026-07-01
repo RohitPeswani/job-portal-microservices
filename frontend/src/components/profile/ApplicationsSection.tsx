@@ -12,14 +12,15 @@ interface ApplicationsSectionProps {
 }
 
 const ApplicationsSection: React.FC<ApplicationsSectionProps> = ({ applications }) => {
+
+  console.log("applications",applications);
   const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
-      case "accepted":
+    switch (status) {
+      case "Hired":
         return "bg-green-100 text-green-700 hover:bg-green-100";
-      case "rejected":
+      case "Rejected":
         return "bg-red-100 text-red-700 hover:bg-red-100";
-      case "pending":
-      case "applied":
+      case "Submitted":
         return "bg-blue-100 text-blue-700 hover:bg-blue-100";
       default:
         return "bg-gray-100 text-gray-700 hover:bg-gray-100";

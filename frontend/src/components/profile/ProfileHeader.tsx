@@ -10,13 +10,23 @@ import { useSelector } from "react-redux";
 import { RootState } from "@/store/store";
 
 interface ProfileHeaderProps {
-  onEditAvatar: () => void;
-  onEditName: () => void;
-  loading: boolean;
+  user?: User | null;
+  onEditAvatar?: () => void;
+  onEditName?: () => void;
+  loading?: boolean;
+  isReadOnly?: boolean;
 } 
 
-const ProfileHeader: React.FC<ProfileHeaderProps> = ({ onEditAvatar, onEditName, loading }) => {
-  const {user} = useSelector((state : RootState) => state.auth);
+const ProfileHeader: React.FC<ProfileHeaderProps> = ({ 
+  user: profileUser, 
+  onEditAvatar, 
+  onEditName, 
+  loading = false,
+  isReadOnly = false
+}) => {
+  const {user: authUser} = useSelector((state : RootState) => state.auth);
+  const user = profileUser || authUser;
+
   const userInitials = user?.name
     ? user.name
         .split(" ")
@@ -39,25 +49,29 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({ onEditAvatar, onEditName,
               {userInitials}
             </AvatarFallback></>}
           </Avatar>
-          <button
-            onClick={onEditAvatar}
-            className="absolute bottom-1 right-1 p-2 bg-white rounded-full shadow-md hover:bg-gray-50 border border-gray-100 transition-all"
-            aria-label="Change profile picture"
-          >
-            <HugeiconsIcon icon={Camera01Icon} size={18} className="text-gray-600" />
-          </button>
+          {!isReadOnly && (
+            <button
+              onClick={onEditAvatar}
+              className="absolute bottom-1 right-1 p-2 bg-white rounded-full shadow-md hover:bg-gray-50 border border-gray-100 transition-all"
+              aria-label="Change profile picture"
+            >
+              <HugeiconsIcon icon={Camera01Icon} size={18} className="text-gray-600" />
+            </button>
+          )}
         </div>
 
         <div className="flex-1 pb-2">
           <div className="flex items-center gap-2">
             <h1 className="text-3xl font-bold text-gray-900">{user?.name || "Anonymous User"}</h1>
-            <button
-              onClick={onEditName}
-              className="p-1 hover:bg-gray-100 rounded transition-colors"
-              aria-label="Edit name"
-            >
-              <HugeiconsIcon icon={PencilEdit01Icon} size={20} className="text-gray-400" />
-            </button>
+            {!isReadOnly && (
+              <button
+                onClick={onEditName}
+                className="p-1 hover:bg-gray-100 rounded transition-colors"
+                aria-label="Edit name"
+              >
+                <HugeiconsIcon icon={PencilEdit01Icon} size={20} className="text-gray-400" />
+              </button>
+            )}
           </div>
           <div className="flex items-center gap-2 mt-1 text-gray-500">
             <HugeiconsIcon icon={Briefcase02Icon} size={16} />

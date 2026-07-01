@@ -38,7 +38,7 @@ const ProfileInfo: React.FC<ProfileInfoProps> = ({ user }) => {
               <div className="p-2 bg-blue-100 rounded-lg">
                 <HugeiconsIcon icon={Mail01Icon} size={20} className="text-blue-600" />
               </div>
-              <div>
+              <div className="min-w-0 flex-1">
                 <p className="text-xs text-gray-500 font-medium">Email</p>
                 <p className="text-sm font-semibold text-gray-900 truncate">{user?.email}</p>
               </div>

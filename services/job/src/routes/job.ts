@@ -6,7 +6,7 @@ import { createCompany, createJob, deleteCompany, getAllActiveJobs, getAllCompan
 const router = express.Router();
 
 router.post('/company', isAuthenticated, uploadFile, createCompany);
-router.delete('/company/:companyId', isAuthenticated, deleteCompany);
+router.put('/company/:companyId', isAuthenticated, deleteCompany);
 router.post('/new', isAuthenticated, createJob);
 router.patch('/:jobId', isAuthenticated, updateJob);
 router.get('/company/all', isAuthenticated, getAllCompanies);

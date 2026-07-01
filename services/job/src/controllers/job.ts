@@ -27,6 +27,13 @@ export const createCompany = tryCatch(async(req : AuthenticatedRequest, res, nex
     return;
   }
 
+  const checkCount = await sql`SELECT COUNT(*) FROM companies WHERE recruiter_id = ${user.user_id}`;
+
+  if(checkCount[0].count >= 3){
+    next(new ErrorHandler(403, "You can only create 3 companies"));
+    return;
+  }
+
   console.time("checking existing company");
 
   const existingCompany = await sql`SELECT company_id FROM companies WHERE name = ${name}`;
@@ -102,9 +109,10 @@ export const deleteCompany = tryCatch(async(req : AuthenticatedRequest, res, nex
         return;
     }
 
-    const {data} = await axios.post(`${process.env.UTILS_SERVICE_URL}/api/utils/upload`, {
-        public_id : company.logo_public_id
+    const {data : deleteData} = await axios.put(`${process.env.UTILS_SERVICE_URL}/api/utils/delete`, {
+        publicId : company.logo_public_id
     });
+
 
     await sql`DELETE FROM companies WHERE company_id = ${companyId}`;
 
@@ -145,9 +153,14 @@ export const createJob = tryCatch(async(req : AuthenticatedRequest, res, next) =
 
     const [job] = await sql`INSERT INTO jobs (title, description, salary, location, job_type, openings, role, work_location, company_id, posted_by_recruiter_id) VALUES (${title}, ${description}, ${salary}, ${location}, ${job_type}, ${openings}, ${role}, ${work_location}, ${company_id}, ${user.user_id}) RETURNING *`;
 
+    const [companyWithJob] = await sql`SELECT c.*, COALESCE(
+    (
+        SELECT json_agg(j.*) FROM jobs j WHERE j.company_id = c.company_id
+    ), '[]'::json) as jobs FROM companies c WHERE c.company_id = ${company_id}`;
+
     res.status(201).json({
         success: true,
-        job
+        company: companyWithJob
     });
 })
 
@@ -177,9 +190,14 @@ export const updateJob = tryCatch(async(req : AuthenticatedRequest, res, next) =
 
     const [updatedJob] = await sql`UPDATE jobs SET title = COALESCE(${title}, title), description = COALESCE(${description}, description), salary = COALESCE(${salary}, salary), location = COALESCE(${location}, location), job_type = COALESCE(${job_type}, job_type), openings = COALESCE(${openings}, openings), role = COALESCE(${role}, role), work_location = COALESCE(${work_location}, work_location), is_active = COALESCE(${is_active}, is_active) WHERE job_id = ${jobId} RETURNING *`;
 
+    const [companyWithJob] = await sql`SELECT c.*, COALESCE(
+    (
+        SELECT json_agg(j.*) FROM jobs j WHERE j.company_id = c.company_id
+    ), '[]'::json) as jobs FROM companies c WHERE c.company_id = ${updatedJob.company_id}`;
+
     res.status(200).json({
         success: true,
-        job: updatedJob
+        company: companyWithJob
     });
 })
 
@@ -191,7 +209,7 @@ export const getAllCompanies = tryCatch(async(req : AuthenticatedRequest, res, n
         return;
     }
 
-    const [companies] = await sql`SELECT * FROM companies WHERE recruiter_id = ${user.user_id}`;
+    const companies = await sql`SELECT * FROM companies WHERE recruiter_id = ${user.user_id}`;
 
     res.status(200).json({
         success: true,
@@ -235,20 +253,22 @@ export const getAllActiveJobs = tryCatch(async(req, res, next) => {
     let paramIndex = 1;
 
     if(title){
-        queryString += ` AND j.title LIKE $${paramIndex}`;
-        values.push(`%${title}%`);
+        queryString += ` AND j.title ILIKE $${paramIndex}`;
+        values.push(`%${title.toString().toLowerCase()}%`);
         paramIndex++;
     }
 
     if(location){
-        queryString += ` AND j.location LIKE $${paramIndex}`;
-        values.push(`%${location}%`);
+        queryString += ` AND j.location ILIKE $${paramIndex}`;
+        values.push(`%${location.toString().toLowerCase()}%`);
         paramIndex++;
     }
 
     queryString += ` ORDER BY j.created_at DESC`;
 
-    const [jobs] = await sql.query(queryString, values);
+
+    const jobs = await sql.query(queryString, values);
+
 
     res.status(200).json({
         success: true,
@@ -299,7 +319,7 @@ export const getApplicationsForJob = tryCatch(async(req: AuthenticatedRequest, r
         return;
     }
 
-    const [applications] = await sql`SELECT * FROM applications WHERE job_id = ${jobId} ORDER BY subscribed DESC, applied_at ASC`;
+    const applications = await sql`SELECT * FROM applications WHERE job_id = ${jobId} ORDER BY subscribed DESC, applied_at ASC`;
 
     res.status(200).json({
         success: true,
@@ -355,5 +375,26 @@ export const updateApplicationStatus = tryCatch(async(req: AuthenticatedRequest,
     res.status(200).json({
         success: true,
         application: updatedApplication
+    });
+})
+
+export const getAllRecruiterJobs = tryCatch(async(req : AuthenticatedRequest, res, next) => {
+    const user = req.user;
+
+    if(!user){
+        next(new ErrorHandler(401, "Unauthorized"));
+        return;
+    }
+
+    if(user.role !== 'recruiter'){
+        next(new ErrorHandler(403, "Forbidden"));
+        return;
+    }
+
+    const jobs = await sql`SELECT * FROM jobs WHERE posted_by_recruiter_id = ${user.user_id}`;
+
+    res.status(200).json({
+        success: true,
+        jobs
     });
 })

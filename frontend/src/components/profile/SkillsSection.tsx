@@ -14,11 +14,17 @@ import { Loader } from "../loader";
 
 interface SkillsSectionProps {
   user: User | null;
-  onSkillsUpdate: (skills: string[]) => Promise<void>;
-  loading: boolean;
+  onSkillsUpdate?: (skills: string[]) => Promise<void>;
+  loading?: boolean;
+  isReadOnly?: boolean;
 }
 
-const SkillsSection: React.FC<SkillsSectionProps> = ({ user, onSkillsUpdate, loading }) => {
+const SkillsSection: React.FC<SkillsSectionProps> = ({ 
+  user, 
+  onSkillsUpdate, 
+  loading = false,
+  isReadOnly = false 
+}) => {
   const [newSkill, setNewSkill] = useState("");
   const currentSkills = user?.skills || [];
 
@@ -32,20 +38,23 @@ const SkillsSection: React.FC<SkillsSectionProps> = ({ user, onSkillsUpdate, loa
     }
 
     try {
-      await onSkillsUpdate([...currentSkills, skill]);
-      setNewSkill("");
-      toast.success(`Skill ${skill} is added successfully`);
+      if (onSkillsUpdate) {
+        await onSkillsUpdate([...currentSkills, skill]);
+        setNewSkill("");
+        
+      }
     } catch (err) {
-      toast.error("Failed to add skill");
+      console.log(err);
     }
   };
 
   const handleRemoveSkill = async (skillToRemove: string) => {
     try {
-      await onSkillsUpdate(currentSkills.filter(s => s !== skillToRemove));
-      toast.success("Skill removed successfully");
+      if (onSkillsUpdate) {
+        await onSkillsUpdate(currentSkills.filter(s => s !== skillToRemove));
+      }
     } catch (err) {
-      toast.error("Failed to remove skill");
+      console.log(err);
     }
   };
 
@@ -61,27 +70,29 @@ const SkillsSection: React.FC<SkillsSectionProps> = ({ user, onSkillsUpdate, loa
         </div>
       </div>
       <CardContent className="p-6">
-        <div className="flex gap-2 mb-6">
-          <div className="relative flex-1">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-              <HugeiconsIcon icon={CourseIcon} size={18} />
-            </span>
-            <Input 
-              value={newSkill}
-              onChange={(e) => setNewSkill(e.target.value)}
-              placeholder="e.g. React, Node.js, Python..." 
-              className="pl-10 h-11 border-gray-200"
-              onKeyPress={(e) => e.key === "Enter" && handleAddSkill()}
-            />
+        {!isReadOnly && (
+          <div className="flex gap-2 mb-6">
+            <div className="relative flex-1">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                <HugeiconsIcon icon={CourseIcon} size={18} />
+              </span>
+              <Input 
+                value={newSkill}
+                onChange={(e) => setNewSkill(e.target.value)}
+                placeholder="e.g. React, Node.js, Python..." 
+                className="pl-10 h-11 border-gray-200"
+                onKeyPress={(e) => e.key === "Enter" && handleAddSkill()}
+              />
+            </div>
+            <Button 
+              onClick={handleAddSkill}
+              className="h-11 bg-gray-800 hover:bg-gray-600 text-white gap-2 px-6"
+            >
+              {loading ? <Loader size={18} text={"Adding skills"} className="text-white"/> : <HugeiconsIcon icon={Add01Icon} size={18} />}
+              {loading ? "" : "Add Skill"}
+            </Button>
           </div>
-          <Button 
-            onClick={handleAddSkill}
-            className="h-11 bg-gray-800 hover:bg-gray-600 text-white gap-2 px-6"
-          >
-            {loading ? <Loader size={18} text={"Adding skills"} className="text-white"/> : <HugeiconsIcon icon={Add01Icon} size={18} />}
-            {loading ? "" : "Add Skill"}
-          </Button>
-        </div>
+        )}
 
         <div className="flex flex-wrap gap-3">
           {currentSkills.length > 0 ? (
@@ -92,13 +103,15 @@ const SkillsSection: React.FC<SkillsSectionProps> = ({ user, onSkillsUpdate, loa
                 className="bg-gray-100 text-gray-700 hover:bg-gray-200 px-4 py-2 text-sm font-medium gap-2 border-none rounded-full"
               >
                 {skill}
-                <button 
-                  onClick={() => handleRemoveSkill(skill)}
-                  className="hover:text-red-500 transition-colors"
-                  aria-label={`Remove ${skill}`}
-                >
-                  <HugeiconsIcon icon={Cancel01Icon} size={14} />
-                </button>
+                {!isReadOnly && (
+                  <button 
+                    onClick={() => handleRemoveSkill(skill)}
+                    className="hover:text-red-500 transition-colors"
+                    aria-label={`Remove ${skill}`}
+                  >
+                    <HugeiconsIcon icon={Cancel01Icon} size={14} />
+                  </button>
+                )}
               </Badge>
             ))
           ) : (

@@ -66,26 +66,70 @@ export const sendEmail = tryCatch(async(req, res) => {
 //         })
 //     }
 // });
-export const uploadFileController = tryCatch(async(req, res) => {
-    const {buffer, public_id} = req.body;
+// export const uploadFileController = tryCatch(async(req, res) => {
+//     const {buffer, public_id} = req.body;
+  
+//     let cloud;
 
-    if(!buffer){
+//     if(public_id){
+//         await cloudinary.v2.uploader.destroy(public_id);
+//     }
+
+//     if(buffer){
+
+//       cloud = await cloudinary.v2.uploader.upload(buffer);
+//     }
+
+
+//     return res.status(200).json({
+//         success:true,
+//         url: cloud?.secure_url,
+//         public_id: cloud?.public_id
+//     });
+
+// });
+
+export const uploadFileController = tryCatch(async (req, res) => {
+    const { buffer } = req.body;
+
+    if (!buffer) {
         return res.status(400).json({
-            success:false,
-            message:"Buffer is required"
+            success: false,
+            message: "Buffer is required"
         });
-    }
-
-    if(public_id){
-        await cloudinary.v2.uploader.destroy(public_id);
     }
 
     const cloud = await cloudinary.v2.uploader.upload(buffer);
 
     return res.status(200).json({
-        success:true,
+        success: true,
         url: cloud.secure_url,
         public_id: cloud.public_id
+    });
+});
+
+export const deleteFileController = tryCatch(async (req, res) => {
+    const { publicId } = req.body;
+
+    if (!publicId) {
+        return res.status(400).json({
+            success: false,
+            message: "Public id is required"
+        });
+    }
+
+    const result = await cloudinary.v2.uploader.destroy(publicId);
+
+    if (result.result !== "ok") {
+        return res.status(404).json({
+            success: false,
+            message: "File not found"
+        });
+    }
+
+    return res.status(200).json({
+        success: true,
+        message: "File deleted successfully"
     });
 });
 

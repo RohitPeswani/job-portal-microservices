@@ -106,6 +106,13 @@ export interface AuthState {
   isAuthenticated: boolean;
 }
 
+export interface ApplicationsState {
+  applications: Application[];
+  loading: boolean;
+  error: string | null;
+  hasFetched: boolean;
+}
+
 export interface RegisterResponse {
   success : boolean;
   message: string;
@@ -128,7 +135,7 @@ export interface Application {
   job_id: number;
   applicant_id: number;
   applicant_email: string;
-  status: "Pending" | "Accepted" | "Rejected";
+  status: "Submitted" | "Hired" | "Rejected";
   resume: string;
   applied_at: string;
   subscribed: boolean;
@@ -162,3 +169,56 @@ export interface LoaderProps {
     className?: string;
     fullscreen?: boolean;
 };
+
+export interface Company {
+  company_id: string;
+  name: string;
+  description: string;
+  website: string;
+  logo: string;
+  logo_public_id: string;
+  recruiter_id: string;
+  created_at: string;
+}
+
+export interface CompanyResponse {
+  success: boolean;
+  company: Company;
+}
+
+export interface CompaniesResponse {
+  success: boolean;
+  companies: Company[];
+}
+
+export interface DeleteCompanyResponse {
+  success: boolean;
+  message: string;
+}
+
+export interface Job {
+  job_id: string;
+  title: string;
+  description: string;
+  salary: number;
+  location: string;
+  job_type: "Full-time" | "Part-time" | "Contract" | "Internship";
+  work_location: "On-site" | "Remote" | "Hybrid";
+  openings: number;
+  role: string;
+  company_id: string;
+  posted_by_recruiter_id: string;
+  is_active: boolean;
+  created_at: string;
+  company_name?: string;
+  company_logo?: string;
+}
+
+export interface CompanyWithJobs extends Company {
+  jobs: Job[];
+}
+
+export interface CompanyDetailsResponse {
+  success: boolean;
+  company: CompanyWithJobs;
+}
